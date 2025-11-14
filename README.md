@@ -1,7 +1,7 @@
 ## MedPal
 #  MedPal – Your Conversational Health Companion  
 ### A GDG Delhi Hackathon 2025 Project  
-### Team- # Code # Duo : **Aditya Tripathi** & **Swati Mangla**
+### Team-  Code Duo : **Aditya Tripathi** & **Swati Mangla**
 
 ---
 

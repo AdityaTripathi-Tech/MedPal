@@ -1,135 +1,131 @@
-## MedPal
-#  MedPal – Your Conversational Health Companion  
-### A GDG Delhi Hackathon 2025 Project  
-### Team-  Code Duo : **Aditya Tripathi** & **Swati Mangla**
+# Agora Conversational AI Chatbot
 
----
+This repository contains a full-stack demo that combines Agora for real-time voice communication and OpenAI for conversational AI.
 
-##  Overview  
-**MedPal** is an AI-powered medication reminder and conversational health companion designed for elderly patients like Mr. Sharma, who often forget their medicines due to handwritten notes or memory limitations.
+High-level structure:
+- `server/` - Node.js Express backend (Agora token generation, chat proxy to OpenAI)
+- `client/` - React (Vite) frontend with chat UI and Agora call wiring
+- `demo.html` - Standalone browser demo (no Node.js required!)
 
-This project addresses the Hackathon problem:
+Features:
+- ✨ **Text chat with OpenAI** (session-scoped conversation memory)
+- 📞 **Agora RTC token generation** endpoint for frontend to join voice channels
+- 🎨 **Minimal UI** with dark, futuristic theme
+- 🎤 **Optional: STT** via Web Speech API and **TTS** via browser speechSynthesis
+- 💊 **Medicine Prescription Reader** - Upload an image of your prescription and the AI extracts all medicine details!
+- **NEW:** 💙 **Emotional Intelligence** - AI detects if you're happy, sad, excited, angry, or anxious and responds with empathy
+- **NEW:** 💾 **Personal Memory Storage** - Save your favorite memories and ask the AI to tell your story!
 
-> *“Create a conversational solution that reminds users to take medicines and helps them understand doctor instructions, making health management intuitive and regular.”*
+## Quick start (Windows PowerShell)
 
-MedPal combines **AI, Vision, Voice, Supabase, and animation** to create a friendly, supportive experience for elderly users.
+### 🚀 Try the Demo First (No Setup Required!)
 
----
+```powershell
+Invoke-Item "C:\Users\smang\OneDrive\Documents\agora\demo.html"
+```
 
-#  Key Features
+Open in any browser. Features:
+- Full chat with AI
+- Speech-to-text (microphone button)
+- Text-to-speech (play reply)
+- **Upload prescription image and read medicine details!**
+- Mock Agora voice channel
 
-### 🔹 1. AI Conversational Health Assistant  
-- Powered by **Google Gemini AI** &  **Agora AI**
-- Friendly and simple responses  
-- Emotion-awareness (sad, confused, worried → responds gently)  
-- Personalized greetings for each user  
+### Full-Stack Setup (Requires Node.js)
 
----
+1. Copy `.env.example` to `.env` in `server/` and fill values:
+   - `OPENAI_API_KEY`, `AGORA_APP_ID`, `AGORA_APP_CERTIFICATE`
 
-### 🔹 2. Prescription OCR (Image to Medicine Schedule)  
-- Upload prescription image  
-- AI extracts:
-  - Medicine name  
-  - Dosage  
-  - Frequency  
-- Auto-creates the user’s medication timetable  
+2. Start the backend
 
----
+```powershell
+cd .\server
+npm install
+npm run dev
+```
 
-### 🔹 3. Smart Medication Reminders  
-- Sends reminders for each medicine  
-- Tracks taken/missed doses  
-- Daily + weekly adherence dashboard  
-- Stored securely in **Supabase Database**  
+By default the server runs on `http://localhost:3001`.
 
----
+3. Start the frontend
 
-### 🔹 4. Caregiver Dashboard  
-Family or doctor can check:  
-- Daily reminders  
-- Missed vs taken doses  
-- Long-term adherence logs  
+```powershell
+cd ..\client
+npm install
+npm run dev
+```
 
----
+Open the URL printed by Vite (usually `http://localhost:5173`).
 
-### 🔹 5. NEW: Animated Robot Health Greeter 🤖  
-A unique hackathon feature that makes MedPal emotionally engaging:
+## 💊 Medicine Prescription Reader
 
-- Robot **walks into the screen**  
-- Waves gently  
-- Greets user by name  
-- Asks about their health  
-- Uses **Gemini AI** to generate messages  
-- Speaks using **Text-to-Speech**  
-- Shows up every new session (login, reload, return after break)  
+**New Feature**: Upload an image of a prescription and the AI will extract:
+- Patient name
+- Doctor name
+- Prescription date
+- All medicines with dosage, frequency, and duration
 
-This feature makes MedPal feel like a warm companion, not just an app.
+See [PRESCRIPTION_FEATURE.md](./PRESCRIPTION_FEATURE.md) for detailed usage.
 
----
+### Demo Mode
+In `demo.html`, click **📤 Upload Image** → select prescription → click **🔍 Read Prescription**
 
-#  Tech Stack
+### Full-Stack
+Backend endpoint: `POST /prescription` with image data (requires GPT-4 Vision API key)
 
-### **Frontend**
-- React  
-- Vite  
-- Tailwind CSS  
-- Custom CSS Animations  
-- Web Speech API (TTS)
+## 💙 Emotional Intelligence & Memory
 
-### **Backend**
-- Supabase  
-  - Authentication  
-  - Realtime Database  
-  - Storage Buckets  
+**New Feature**: The AI now understands your emotions and remembers your stories!
 
-### **AI & Processing**
-- Google Gemini & Agora AI (Chat + Emotion)  
-- Custom OCR medicine parser pipeline  
+- **Emotion Detection**: AI detects when you're happy, sad, excited, angry, or anxious
+- **Empathetic Responses**: Gets special empathetic reply based on detected emotion
+- **Memory Storage**: Save important moments by saying "save this memory"
+- **Story Recall**: Ask "tell me my story" to hear all your saved memories
+- **Mood Tracking**: Sidebar shows your current mood with emoji
 
----
+**Try it:**
+```
+You: "I'm so excited! I got promoted today! Save this memory"
+AI: "Your energy is incredible! I'm excited with you! 🚀"
+    [Saves memory with 'excited' emotion]
 
-# 🗂️ Supabase Database Schema
+You: "Tell me my story"
+AI: "📖 YOUR STORY - Here's what I remember about you..."
+```
 
-### **users**
-| Column | Type | Notes |
-|--------|------|--------|
-| id | uuid | Primary key |
-| name | text | User name |
-| email | text | Login email |
+See [EMOTIONAL_INTELLIGENCE.md](./EMOTIONAL_INTELLIGENCE.md) for full guide and [BACKEND_EMOTION_MEMORY.md](./BACKEND_EMOTION_MEMORY.md) for backend setup.
 
-### **prescriptions**
-| Column | Type |
-|--------|------|
-| id | uuid |
-| user_id | uuid |
-| medicine_name | text |
-| dosage | text |
-| frequency | text |
-| image_url | text |
+## Agora SDK (voice calls)
 
-### **reminders**
-| Column | Type |
-|--------|------|
-| id | uuid |
-| user_id | uuid |
-| medicine_name | text |
-| time | timestamp |
-| status | text |
+The client attempts to dynamically import `agora-rtc-sdk-ng`. To enable voice calls, install the SDK in the client:
 
-### **adherence_log**
-| Column | Type |
-|--------|------|
-| id | uuid |
-| user_id | uuid |
-| date | date |
-| taken_count | int |
-| missed_count | int |
+```powershell
+cd client
+npm install agora-rtc-sdk-ng
+```
 
----
+If you prefer CDN usage, you can also include the appropriate script tag in `index.html`.
 
+## Agora SDK (voice calls)
 
+The client attempts to dynamically import `agora-rtc-sdk-ng`. To enable voice calls, install the SDK in the client:
 
-### 1️⃣ Clone Repository
+```powershell
+cd client
+npm install agora-rtc-sdk-ng
+```
 
-git clone 
+If you prefer CDN usage, you can also include the appropriate script tag in `index.html`.
+
+## Notes
+
+- This project uses an in-memory session store. For production, persist conversation history in a database.
+- The OpenAI integration uses the `openai` node package. Choose the model that fits your quota and needs.
+- STT/TTS here are browser-based (Web Speech API). For higher accuracy or emotion-aware TTS, integrate cloud providers (Whisper, ElevenLabs, etc.).
+
+## Next steps / Optional
+
+- Group multi-user calls (Agora channel membership and message routing)
+- Add durable conversation storage
+- Add emotion-based TTS via a provider supporting voice styles
+- Add authentication and per-user sessions
 

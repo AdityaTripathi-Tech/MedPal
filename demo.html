@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agora Conversational AI - Demo</title>
+    <style>
+        :root {
+            --bg: #0b0f14;
+            --panel: #0f1720;
+            --muted: #93c5fd;
+            --accent: #2dd4bf;
+            --blue: #3b82f6;
+            --text: #e6eef6;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(180deg, #05060a 0%, #08101a 100%);
+            color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .app-root {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .app-header {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 15px;
+        }
+
+        .app-header h1 {
+            margin: 0;
+            font-size: 24px;
+            background: linear-gradient(90deg, var(--blue), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .status-badge {
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: rgba(45, 212, 191, 0.1);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+
+        .chat-root {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 240px;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .sidebar-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sidebar-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 14px;
+            border-radius: 8px;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--blue);
+            color: var(--blue);
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn.primary {
+            background: linear-gradient(90deg, var(--blue), rgba(59, 130, 246, 0.8));
+            border-color: var(--blue);
+            color: #fff;
+        }
+
+        .btn.primary:hover:not(:disabled) {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+
+        .session-id {
+            font-size: 11px;
+            color: var(--muted);
+            word-break: break-all;
+            font-family: monospace;
+        }
+
+        .chat-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.3);
+            border-radius: 10px;
+        }
+
+        .msg {
+            max-width: 75%;
+            padding: 12px 14px;
+            border-radius: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .emotion-indicator {
+            display: inline-block;
+            margin-left: 8px;
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .msg.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            color: #fff;
+        }
+
+        .msg.assistant {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .msg.system {
+            align-self: center;
+            background: rgba(45, 212, 191, 0.1);
+            border: 1px solid rgba(45, 212, 191, 0.3);
+            color: var(--accent);
+            font-size: 12px;
+            max-width: 90%;
+        }
+
+        .role {
+            font-size: 10px;
+            color: var(--muted);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .content {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .composer {
+            display: flex;
+            gap: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .composer input {
+            flex: 1;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .composer input:focus {
+            outline: none;
+            border-color: var(--blue);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .composer button {
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(90deg, var(--blue), rgba(59, 130, 246, 0.8));
+            color: #fff;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .composer button:hover {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+
+        .info-box {
+            background: rgba(45, 212, 191, 0.05);
+            border: 1px solid rgba(45, 212, 191, 0.2);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--blue);
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                opacity: 0.3;
+            }
+            30% {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-root">
+        <header class="app-header">
+            <h1>🤖 Agora Conversational AI</h1>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <div class="status-badge" id="backendBadge">Real Backend: <strong id="backendHost">http://localhost:3001</strong></div>
+                <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;">
+                    <input type="checkbox" id="useRealBackend" checked /> Use real backend
+                </label>
+                <div style="display:flex;align-items:center;gap:8px;margin-left:10px;">
+                    <input id="authUser" type="text" placeholder="user" style="width:100px;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--text)" />
+                    <input id="authPass" type="password" placeholder="password" style="width:120px;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--text)" />
+                    <button id="saveAuthBtn" style="padding:6px 10px;border-radius:6px;border:none;background:var(--blue);color:white;cursor:pointer">Save Auth</button>
+                    <button id="testAuthBtn" style="padding:6px 10px;border-radius:6px;border:none;background:var(--accent);color:#042a2a;cursor:pointer">Test Auth</button>
+                    <div id="healthBadge" style="margin-left:8px;font-size:12px;color:var(--muted)">Status: <span id="healthStatus">Unknown</span></div>
+                </div>
+            </div>
+        </header>
+
+        <div class="chat-root">
+            <aside class="sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-title">📞 Voice Controls</div>
+                    <div class="controls">
+                        <button class="btn" id="joinBtn">Join Voice</button>
+                        <button class="btn" id="leaveBtn" disabled>End Call</button>
+                        <button class="btn" id="muteBtn" disabled>Mute</button>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-title">🎤 Speech</div>
+                    <div class="controls">
+                        <button class="btn" id="sttBtn">Speak (STT)</button>
+                        <button class="btn" id="ttsBtn">🔊 Play Last Reply</button>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-title">💊 Prescription</div>
+                    <div class="controls">
+                        <label for="imageUpload" class="btn" style="text-align:center;cursor:pointer;margin:0;">
+                            📤 Upload Image
+                        </label>
+                        <input type="file" id="imageUpload" accept="image/*" style="display:none;" />
+                        <button class="btn" id="readPrescriptionBtn" disabled>🔍 Read Prescription</button>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-title">💾 My Memories</div>
+                    <div id="favoriteMemories" style="font-size:12px;max-height:150px;overflow-y:auto;border:1px solid rgba(255,255,255,0.1);padding:8px;border-radius:6px;background:rgba(255,255,255,0.02);">
+                        <div style="color:#93c5fd;text-align:center;padding:20px;font-size:13px;">No memories yet</div>
+                    </div>
+                    <button class="btn" id="viewAllMemoriesBtn" style="width:100%;margin-top:8px;font-size:12px;">📖 View All Memories</button>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-title">😊 Your Mood</div>
+                    <div id="moodDisplay" style="text-align:center;font-size:24px;padding:10px;">-</div>
+                    <div id="moodText" style="text-align:center;font-size:11px;color:#93c5fd;">Waiting for messages...</div>
+                </div>
+
+                <div class="info-box">
+                    <strong>Demo Mode:</strong> Text chat fully functional. Voice/STT/TTS use browser APIs.
+                </div>
+            </aside>
+
+            <div class="chat-panel">
+                <div class="messages" id="messages"></div>
+
+                <form class="composer" id="messageForm">
+                    <input
+                        type="text"
+                        id="messageInput"
+                        placeholder="Type a message or press 'Speak (STT)'..."
+                        autocomplete="off"
+                    />
+                    <button type="submit">Send</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ Mock Backend (Simulated) ============
+        const mockBackend = {
+            sessions: new Map(),
+            memories: new Map(), // Store memories by sessionId
+            emotionHistory: new Map(), // Track emotion patterns
+
+            // Emotion detection keywords
+            emotionKeywords: {
+                happy: ['happy', 'great', 'wonderful', 'awesome', 'excited', 'fantastic', 'love', 'enjoy', 'brilliant', '😊', '😄', '🎉'],
+                sad: ['sad', 'unhappy', 'depressed', 'down', 'upset', 'miserable', 'lonely', 'heartbroken', 'struggle', '😢', '😭', '💔'],
+                angry: ['angry', 'furious', 'mad', 'frustrated', 'annoyed', 'irritated', 'hate', 'terrible', '😠', '🤬', '😤'],
+                excited: ['excited', 'thrilled', 'pumped', 'stoked', 'hyped', 'can\'t wait', 'amazing', '🤩', '😍', '🚀'],
+                anxious: ['worried', 'anxious', 'nervous', 'scared', 'afraid', 'stress', 'panic', 'overwhelmed', '😰', '😟']
+            },
+
+            // Empathetic responses based on emotion
+            empathyResponses: {
+                happy: [
+                    "That's wonderful to hear! Your happiness is contagious! 🎉 Keep shining!",
+                    "I'm so glad you're feeling great! That's amazing energy! ✨",
+                    "Your joy is beautiful! Let's celebrate this moment together! 🌟"
+                ],
+                sad: [
+                    "I can hear you're going through something difficult. I'm here to listen and support you. 💙",
+                    "It's okay to feel sad sometimes. Would you like to talk about what's on your mind?",
+                    "Your feelings matter. Let me help you through this. You're not alone. 🤝"
+                ],
+                angry: [
+                    "I understand your frustration. It's valid to feel angry. Let's work through this together.",
+                    "That sounds really challenging. Take a deep breath. How can I help you find peace?",
+                    "Your feelings are important. Let's talk about what's bothering you."
+                ],
+                excited: [
+                    "Your energy is incredible! I'm excited with you! 🚀",
+                    "This enthusiasm is amazing! What's making you feel so energized?",
+                    "I love your passion! Let's channel this excitement into something great!"
+                ],
+                anxious: [
+                    "I sense some worry. That's completely normal. Let's take this one step at a time. 💙",
+                    "You're safe here. Take a breath. How can I ease your mind?",
+                    "Anxiety can be overwhelming, but you're stronger than you think. I'm here for you."
+                ]
+            },
+
+            // Simulated OpenAI responses
+            aiResponses: [
+                "That's an interesting question! I'd love to help you explore that further.",
+                "Great point! Let me think about that for a moment... I believe the key is to consider multiple perspectives.",
+                "Absolutely! This reminds me of a fascinating concept in AI and human-computer interaction.",
+                "I completely understand your perspective. Here's what I think might be helpful...",
+                "That's a thought-provoking inquiry! The answer often depends on context and implementation details.",
+                "You've touched on something really important. Let me break this down for you...",
+                "Interesting observation! In my analysis, I'd suggest we consider both technical and human factors.",
+                "I appreciate that question. From what I understand, the best approach is often holistic.",
+            ],
+
+            // Detect emotion from text
+            detectEmotion(text) {
+                const lowerText = text.toLowerCase();
+                for (const [emotion, keywords] of Object.entries(this.emotionKeywords)) {
+                    if (keywords.some(keyword => lowerText.includes(keyword))) {
+                        return emotion;
+                    }
+                }
+                return 'neutral';
+            },
+
+            // Get empathetic response based on emotion
+            getEmpathyResponse(emotion) {
+                const responses = this.empathyResponses[emotion] || this.empathyResponses.neutral;
+                return responses[Math.floor(Math.random() * responses.length)];
+            },
+
+            // Store a memory
+            storeMemory(sessionId, content, emotion) {
+                if (!this.memories.has(sessionId)) {
+                    this.memories.set(sessionId, []);
+                }
+                const memory = {
+                    id: Date.now(),
+                    content: content,
+                    emotion: emotion,
+                    timestamp: new Date().toLocaleString(),
+                    isFavorite: false
+                };
+                this.memories.get(sessionId).push(memory);
+                return memory;
+            },
+
+            // Get all memories
+            getMemories(sessionId) {
+                return this.memories.get(sessionId) || [];
+            },
+
+            // Toggle memory as favorite
+            toggleFavoriteMemory(sessionId, memoryId) {
+                const memories = this.getMemories(sessionId);
+                const memory = memories.find(m => m.id === memoryId);
+                if (memory) {
+                    memory.isFavorite = !memory.isFavorite;
+                }
+                return memory;
+            },
+
+            parsePrescription(imageBase64) {
+                // Simulate prescription parsing
+                const mockPrescriptions = [
+                    {
+                        patientName: "John Doe",
+                        medications: [
+                            { name: "Metformin", dosage: "500mg", frequency: "Twice daily", duration: "3 months" },
+                            { name: "Lisinopril", dosage: "10mg", frequency: "Once daily", duration: "Ongoing" }
+                        ],
+                        date: "November 14, 2025",
+                        doctor: "Dr. Sarah Johnson"
+                    },
+                    {
+                        patientName: "Jane Smith",
+                        medications: [
+                            { name: "Amoxicillin", dosage: "250mg", frequency: "Three times daily", duration: "7 days" },
+                            { name: "Ibuprofen", dosage: "400mg", frequency: "As needed for pain", duration: "2 weeks" }
+                        ],
+                        date: "November 10, 2025",
+                        doctor: "Dr. Michael Chen"
+                    }
+                ];
+                
+                // Return a random mock prescription
+                return mockPrescriptions[Math.floor(Math.random() * mockPrescriptions.length)];
+            },
+
+            generateResponse(userMessage) {
+                // Simulate a smart response based on message length
+                const keywords = userMessage.toLowerCase();
+                let response = this.aiResponses[Math.floor(Math.random() * this.aiResponses.length)];
+
+                if (keywords.includes("hello") || keywords.includes("hi")) {
+                    response = "Hello! 👋 I'm happy to chat with you. How can I assist you today?";
+                } else if (keywords.includes("how are")) {
+                    response = "I'm doing great, thanks for asking! I'm here and ready to help with whatever you need.";
+                } else if (keywords.includes("what is")) {
+                    response = "That's a great question! Let me explain: " + response;
+                } else if (keywords.includes("help")) {
+                    response = "Of course! I'm here to help. " + response;
+                } else if (keywords.includes("bye") || keywords.includes("goodbye")) {
+                    response = "It was great chatting with you! Feel free to come back anytime. Goodbye! 👋";
+                }
+
+                return response;
+            },
+
+            getOrCreateSession(sessionId) {
+                if (!this.sessions.has(sessionId)) {
+                    this.sessions.set(sessionId, [
+                        { role: 'system', content: 'You are a helpful conversational AI assistant. Keep responses natural and concise.' }
+                    ]);
+                }
+                return this.sessions.get(sessionId);
+            },
+
+            async chat(sessionId, message) {
+                const session = this.getOrCreateSession(sessionId);
+                
+                // Detect emotion from user message
+                const emotion = this.detectEmotion(message);
+                
+                session.push({ role: 'user', content: message, emotion: emotion });
+
+                // Simulate API latency (200-800ms)
+                await new Promise(r => setTimeout(r, Math.random() * 600 + 200));
+
+                // Generate empathetic response if strong emotion detected
+                let reply;
+                if (emotion !== 'neutral') {
+                    reply = this.getEmpathyResponse(emotion) + '\n\n' + this.generateResponse(message);
+                } else {
+                    reply = this.generateResponse(message);
+                }
+                
+                session.push({ role: 'assistant', content: reply });
+
+                return { reply, emotion };
+            },
+
+            getHistory(sessionId) {
+                const session = this.getOrCreateSession(sessionId);
+                return session.filter(m => m.role !== 'system');
+            },
+
+            generateAgoraToken(channelName) {
+                // Mock Agora token (not real, just for UI)
+                return {
+                    token: 'mock_token_' + Math.random().toString(36).slice(2, 15),
+                    appID: 'mock_app_id_12345',
+                    channelName: channelName,
+                    uid: Math.floor(Math.random() * 100000)
+                };
+            }
+        };
+
+        // ============ Real Backend Bridge (optional) ============
+        const REAL_BACKEND_HOST = 'http://localhost:3001';
+
+        // Helper to include Basic Auth header if credentials provided in UI
+        function getAuthHeaders() {
+            const user = document.getElementById('authUser')?.value || '';
+            const pass = document.getElementById('authPass')?.value || '';
+            const headers = { 'Content-Type': 'application/json' };
+            if (user && pass) {
+                const token = btoa(`${user}:${pass}`);
+                headers['Authorization'] = `Basic ${token}`;
+            }
+            return headers;
+        }
+
+        // Load saved credentials from sessionStorage on startup
+        window.addEventListener('DOMContentLoaded', () => {
+            const su = sessionStorage.getItem('agora_auth_user');
+            const sp = sessionStorage.getItem('agora_auth_pass');
+            if (su) document.getElementById('authUser').value = su;
+            if (sp) document.getElementById('authPass').value = sp;
+
+            // Wire Save and Test buttons
+            document.getElementById('saveAuthBtn').addEventListener('click', () => {
+                const u = document.getElementById('authUser').value || '';
+                const p = document.getElementById('authPass').value || '';
+                sessionStorage.setItem('agora_auth_user', u);
+                sessionStorage.setItem('agora_auth_pass', p);
+                document.getElementById('healthStatus').textContent = 'Saved';
+            });
+
+            document.getElementById('testAuthBtn').addEventListener('click', async () => {
+                document.getElementById('healthStatus').textContent = 'Testing...';
+                try {
+                    const resp = await fetch(`${REAL_BACKEND_HOST}/memories?sessionId=test`, { headers: getAuthHeaders() });
+                    if (resp.status === 401) {
+                        document.getElementById('healthStatus').textContent = 'Unauthorized';
+                    } else if (!resp.ok) {
+                        document.getElementById('healthStatus').textContent = `Error ${resp.status}`;
+                    } else {
+                        document.getElementById('healthStatus').textContent = 'OK';
+                    }
+                } catch (e) {
+                    document.getElementById('healthStatus').textContent = 'No connection';
+                }
+            });
+
+            // Poll public health every 10s
+            async function pollHealth() {
+                try {
+                    const r = await fetch(`${REAL_BACKEND_HOST}/health`);
+                    if (r.ok) document.getElementById('healthStatus').textContent = 'Healthy';
+                    else document.getElementById('healthStatus').textContent = 'Unhealthy';
+                } catch (e) {
+                    document.getElementById('healthStatus').textContent = 'Offline';
+                }
+            }
+            pollHealth();
+            setInterval(pollHealth, 10000);
+        });
+
+        const realBackend = {
+            async chat(sessionId, message) {
+                try {
+                    const resp = await fetch(`${REAL_BACKEND_HOST}/chat`, {
+                        method: 'POST',
+                        headers: getAuthHeaders(),
+                        body: JSON.stringify({ sessionId, message })
+                    });
+                    if (!resp.ok) throw new Error('Network response was not ok');
+                    const data = await resp.json();
+                    // Normalize to mock backend shape
+                    return {
+                        reply: data.reply || data.message || data.analysis?.reply || '',
+                        emotion: data.emotion || data.analysis?.emotion || 'neutral',
+                        confidence: data.confidence ?? data.analysis?.confidence ?? 0,
+                        raw: data
+                    };
+                } catch (err) {
+                    console.error('Real backend chat error', err);
+                    throw err;
+                }
+            },
+
+            storeMemory(sessionId, content, emotion) {
+                // Use POST /memory
+                return fetch(`${REAL_BACKEND_HOST}/memory`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ sessionId, message: content, emotion })
+                }).then(r => r.json()).then(j => j.memory || null).catch(() => null);
+            },
+
+            async getMemories(sessionId) {
+                try {
+                    const resp = await fetch(`${REAL_BACKEND_HOST}/memories?sessionId=${encodeURIComponent(sessionId)}`, { headers: getAuthHeaders() });
+                    if (!resp.ok) return [];
+                    const j = await resp.json();
+                    return j.memories || [];
+                } catch (e) {
+                    return [];
+                }
+            },
+
+            generateAgoraToken(channelName) {
+                // Keep using mock token for Agora UI
+                return mockBackend.generateAgoraToken(channelName);
+            }
+        };
+
+        // ============ Frontend Logic ============
+        class ChatApp {
+            constructor() {
+                this.sessionId = 'session-' + Math.random().toString(36).slice(2, 9);
+                this.messages = [];
+                this.inCall = false;
+                this.muted = false;
+                this.lastAiReply = '';
+                this.recognition = null;
+                this.isListening = false;
+                this.uploadedImageBase64 = null;
+                this.currentMood = 'neutral';
+                this.memories = [];
+
+                this.setupSpeechRecognition();
+                this.setupEventListeners();
+                this.addSystemMessage('Welcome to Agora Conversational AI with Emotional Intelligence! 🎉 I understand your emotions and can help you save memories.');
+                this.updateSessionDisplay();
+                this.loadHistory();
+            }
+
+            setupSpeechRecognition() {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {
+                    console.warn('SpeechRecognition not available');
+                    return;
+                }
+
+                this.recognition = new SpeechRecognition();
+                this.recognition.continuous = false;
+                this.recognition.interimResults = false;
+                this.recognition.lang = 'en-US';
+
+                this.recognition.onstart = () => {
+                    this.isListening = true;
+                    document.getElementById('sttBtn').textContent = '⏹️ Stop Listening...';
+                };
+
+                this.recognition.onresult = (event) => {
+                    const transcript = Array.from(event.results)
+                        .map(result => result[0].transcript)
+                        .join('');
+                    document.getElementById('messageInput').value = transcript;
+                    this.sendMessage();
+                };
+
+                this.recognition.onerror = (event) => {
+                    console.error('Speech recognition error:', event.error);
+                    this.addSystemMessage(`Speech error: ${event.error}`);
+                };
+
+                this.recognition.onend = () => {
+                    this.isListening = false;
+                    document.getElementById('sttBtn').textContent = '🎤 Speak (STT)';
+                };
+            }
+
+            setupEventListeners() {
+                document.getElementById('messageForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.sendMessage();
+                });
+
+                document.getElementById('joinBtn').addEventListener('click', () => this.joinCall());
+                document.getElementById('leaveBtn').addEventListener('click', () => this.leaveCall());
+                document.getElementById('muteBtn').addEventListener('click', () => this.toggleMute());
+                document.getElementById('sttBtn').addEventListener('click', () => this.toggleSTT());
+                document.getElementById('ttsBtn').addEventListener('click', () => this.playLastReply());
+                
+                // Image upload
+                document.getElementById('imageUpload').addEventListener('change', (e) => this.handleImageUpload(e));
+                document.getElementById('readPrescriptionBtn').addEventListener('click', () => this.readPrescription());
+                
+                // Memories
+                document.getElementById('viewAllMemoriesBtn').addEventListener('click', () => this.showAllMemories());
+                
+                // Backend toggle
+                const backendToggle = document.getElementById('useRealBackend');
+                if (backendToggle) {
+                    backendToggle.addEventListener('change', async (e) => {
+                        const checked = e.target.checked;
+                        document.getElementById('backendHost').textContent = checked ? REAL_BACKEND_HOST : 'mock';
+                        // Reload history/memories when switching
+                        await this.loadHistory();
+                    });
+                }
+            }
+
+            async sendMessage() {
+                const input = document.getElementById('messageInput');
+                const message = input.value.trim();
+                if (!message) return;
+
+                input.value = '';
+
+                // Decide backend
+                const useReal = !!document.getElementById('useRealBackend')?.checked;
+
+                // If using mock, pre-detect emotion for UI responsiveness
+                let preEmotion = mockBackend.detectEmotion(message);
+                if (!useReal) {
+                    this.currentMood = preEmotion;
+                    this.updateMoodDisplay();
+                }
+
+                // Add user message to UI
+                this.addMessage('user', message, useReal ? null : preEmotion);
+
+                // Show typing indicator
+                this.showTypingIndicator();
+
+                try {
+                    let result;
+                    if (useReal) {
+                        try {
+                            result = await realBackend.chat(this.sessionId, message);
+                        } catch (err) {
+                            console.warn('Real backend failed, falling back to mock:', err);
+                            result = await mockBackend.chat(this.sessionId, message);
+                        }
+
+                        // Set mood from backend analysis if available
+                        const emotion = result.emotion || mockBackend.detectEmotion(message);
+                        this.currentMood = emotion;
+                        this.updateMoodDisplay();
+                        this.removeTypingIndicator();
+                        this.addMessage('assistant', result.reply || '');
+                        this.lastAiReply = result.reply || '';
+                    } else {
+                        result = await mockBackend.chat(this.sessionId, message);
+                        this.removeTypingIndicator();
+                        this.addMessage('assistant', result.reply || '');
+                        this.lastAiReply = result.reply || '';
+                    }
+
+                    // Handle special memory commands
+                    if (message.toLowerCase().includes('save this memory') || message.toLowerCase().includes('remember this')) {
+                        let memory = null;
+                        if (useReal) {
+                            memory = await realBackend.storeMemory(this.sessionId, message, this.currentMood);
+                        } else {
+                            memory = mockBackend.storeMemory(this.sessionId, message, this.currentMood);
+                        }
+                        if (memory) {
+                            this.memories.push(memory);
+                            this.updateFavoriteMemoriesDisplay();
+                            this.addSystemMessage(`💾 Memory saved! "${message.substring(0, 50)}..."`);
+                        }
+                    }
+
+                    if (message.toLowerCase().includes('show memories') || message.toLowerCase().includes('tell me my story')) {
+                        // Refresh memories from chosen backend
+                        if (useReal) {
+                            this.memories = await realBackend.getMemories(this.sessionId);
+                            this.updateFavoriteMemoriesDisplay();
+                            this.recallMemories();
+                        } else {
+                            this.recallMemories();
+                        }
+                    }
+
+                    // Auto-play TTS if available
+                    this.speakReply(this.lastAiReply);
+                } catch (error) {
+                    this.removeTypingIndicator();
+                    this.addMessage('assistant', '❌ Error generating response. Please try again.');
+                }
+            }
+
+            addMessage(role, content, emotion = null) {
+                const msg = { role, content, emotion };
+                this.messages.push(msg);
+                this.renderMessages();
+                this.scrollToBottom();
+            }
+
+            addSystemMessage(content) {
+                const msg = { role: 'system', content };
+                this.messages.push(msg);
+                this.renderMessages();
+                this.scrollToBottom();
+            }
+
+            showTypingIndicator() {
+                const messagesDiv = document.getElementById('messages');
+                const typingDiv = document.createElement('div');
+                typingDiv.id = 'typingIndicator';
+                typingDiv.className = 'msg assistant';
+                typingDiv.innerHTML = `
+                    <div class="role">assistant</div>
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                `;
+                messagesDiv.appendChild(typingDiv);
+                this.scrollToBottom();
+            }
+
+            removeTypingIndicator() {
+                const indicator = document.getElementById('typingIndicator');
+                if (indicator) indicator.remove();
+            }
+
+            renderMessages() {
+                const messagesDiv = document.getElementById('messages');
+                messagesDiv.innerHTML = '';
+
+                this.messages.forEach((msg) => {
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = `msg ${msg.role}`;
+
+                    const roleDiv = document.createElement('div');
+                    roleDiv.className = 'role';
+                    roleDiv.textContent = msg.role;
+
+                    // Add emotion indicator if present
+                    if (msg.emotion && msg.emotion !== 'neutral') {
+                        const emotionEmojis = { happy: '😊', sad: '😢', angry: '😠', excited: '🤩', anxious: '😰' };
+                        const emotionSpan = document.createElement('span');
+                        emotionSpan.className = 'emotion-indicator';
+                        emotionSpan.textContent = emotionEmojis[msg.emotion] || msg.emotion;
+                        roleDiv.appendChild(emotionSpan);
+                    }
+
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'content';
+                    contentDiv.textContent = msg.content;
+
+                    msgDiv.appendChild(roleDiv);
+                    msgDiv.appendChild(contentDiv);
+                    messagesDiv.appendChild(msgDiv);
+                });
+            }
+
+            scrollToBottom() {
+                const messagesDiv = document.getElementById('messages');
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
+
+            updateSessionDisplay() {
+                document.getElementById('sessionId').textContent = this.sessionId;
+            }
+
+            async loadHistory() {
+                const useReal = !!document.getElementById('useRealBackend')?.checked;
+                if (useReal) {
+                    // Load memories from real backend and update favorites
+                    this.memories = await realBackend.getMemories(this.sessionId);
+                    this.updateFavoriteMemoriesDisplay();
+                    // Start with a welcome system message
+                    this.messages = [{ role: 'system', content: 'Welcome back! Your memories have been loaded.' }];
+                } else {
+                    const history = mockBackend.getHistory(this.sessionId);
+                    this.messages = history;
+                }
+                this.renderMessages();
+            }
+
+            joinCall() {
+                const channelName = prompt('Enter channel name for voice call:', 'demo-channel') || 'demo-channel';
+                if (!channelName) return;
+
+                const tokenData = mockBackend.generateAgoraToken(channelName);
+                this.addSystemMessage(`📞 Joined channel: "${channelName}" (mock)\nToken: ${tokenData.token.substring(0, 20)}...`);
+
+                this.inCall = true;
+                document.getElementById('joinBtn').disabled = true;
+                document.getElementById('leaveBtn').disabled = false;
+                document.getElementById('muteBtn').disabled = false;
+
+                this.addSystemMessage('✅ Voice channel active (demo mode - no real audio)');
+            }
+
+            leaveCall() {
+                this.addSystemMessage('📵 Left voice channel');
+                this.inCall = false;
+                this.muted = false;
+
+                document.getElementById('joinBtn').disabled = false;
+                document.getElementById('leaveBtn').disabled = true;
+                document.getElementById('muteBtn').disabled = true;
+                document.getElementById('muteBtn').textContent = 'Mute';
+            }
+
+            toggleMute() {
+                this.muted = !this.muted;
+                const btn = document.getElementById('muteBtn');
+                btn.textContent = this.muted ? '🔇 Unmute' : '🔊 Mute';
+                this.addSystemMessage(this.muted ? '🔇 Microphone muted' : '🔊 Microphone unmuted');
+            }
+
+            toggleSTT() {
+                if (!this.recognition) {
+                    this.addSystemMessage('❌ Speech Recognition not available in your browser');
+                    return;
+                }
+
+                if (this.isListening) {
+                    this.recognition.stop();
+                } else {
+                    this.recognition.start();
+                }
+            }
+
+            speakReply(text) {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'en-US';
+                    utterance.rate = 0.95;
+                    utterance.pitch = 1;
+                    window.speechSynthesis.speak(utterance);
+                }
+            }
+
+            playLastReply() {
+                if (!this.lastAiReply) {
+                    this.addSystemMessage('No AI reply to play yet. Send a message first!');
+                    return;
+                }
+                this.speakReply(this.lastAiReply);
+                this.addSystemMessage('🔊 Playing last reply...');
+            }
+
+            handleImageUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.uploadedImageBase64 = e.target.result;
+                    const fileName = file.name;
+                    this.addSystemMessage(`📸 Image uploaded: ${fileName}`);
+                    document.getElementById('readPrescriptionBtn').disabled = false;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            async readPrescription() {
+                if (!this.uploadedImageBase64) {
+                    this.addSystemMessage('❌ No image uploaded yet');
+                    return;
+                }
+
+                this.showTypingIndicator();
+                this.addSystemMessage('🔍 Analyzing prescription image...');
+
+                // Simulate OCR/Vision processing
+                await new Promise(r => setTimeout(r, 1500));
+
+                const prescription = mockBackend.parsePrescription(this.uploadedImageBase64);
+                this.removeTypingIndicator();
+
+                // Format prescription data nicely
+                let prescriptionText = `
+💊 PRESCRIPTION DETAILS
+━━━━━━━━━━━━━━━━━━━━━━
+👤 Patient: ${prescription.patientName}
+📅 Date: ${prescription.date}
+👨‍⚕️ Doctor: ${prescription.doctor}
+
+📋 MEDICATIONS:
+`;
+                prescription.medications.forEach((med, idx) => {
+                    prescriptionText += `\n${idx + 1}. ${med.name}
+   💊 Dosage: ${med.dosage}
+   ⏱️  Frequency: ${med.frequency}
+   📅 Duration: ${med.duration}`;
+                });
+
+                this.addMessage('assistant', prescriptionText);
+                this.lastAiReply = prescriptionText;
+
+                // Auto-read via TTS
+                const ttsText = `Prescription for ${prescription.patientName}. Medications: ${prescription.medications.map(m => m.name + ' ' + m.dosage + ' ' + m.frequency).join('. ')}`;
+                this.speakReply(ttsText);
+            }
+
+            updateMoodDisplay() {
+                const moodEmojis = {
+                    happy: '😊',
+                    sad: '😢',
+                    angry: '😠',
+                    excited: '🤩',
+                    anxious: '😰',
+                    neutral: '😐'
+                };
+                const moodNames = {
+                    happy: 'Happy',
+                    sad: 'Sad',
+                    angry: 'Angry',
+                    excited: 'Excited',
+                    anxious: 'Anxious',
+                    neutral: 'Neutral'
+                };
+                document.getElementById('moodDisplay').textContent = moodEmojis[this.currentMood] || '😐';
+                document.getElementById('moodText').textContent = moodNames[this.currentMood] || 'Neutral';
+            }
+
+            updateFavoriteMemoriesDisplay() {
+                const favorites = this.memories.filter(m => m.isFavorite);
+                const container = document.getElementById('favoriteMemories');
+                
+                if (favorites.length === 0) {
+                    container.innerHTML = '<div style="color:#93c5fd;text-align:center;padding:20px;font-size:13px;">No favorites yet. Mark memories as favorites to see them here!</div>';
+                    return;
+                }
+
+                container.innerHTML = favorites.map(m => `
+                    <div style="padding:8px;border-bottom:1px solid rgba(255,255,255,0.1);cursor:pointer;" onclick="app.viewMemory('${m.id}')">
+                        <div style="font-size:11px;color:#2dd4bf;">${m.emotion}</div>
+                        <div style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${m.content.substring(0, 40)}</div>
+                    </div>
+                `).join('');
+            }
+
+            showAllMemories() {
+                if (this.memories.length === 0) {
+                    this.addSystemMessage('📖 No memories yet. Send "save this memory" after saying something you want to remember!');
+                    return;
+                }
+
+                let memoriesText = '📖 YOUR MEMORIES\n━━━━━━━━━━━━━━━━\n\n';
+                this.memories.forEach((m, idx) => {
+                    const star = m.isFavorite ? '⭐' : '☆';
+                    memoriesText += `${idx + 1}. ${star} ${m.emotion.toUpperCase()}\n   ${m.content}\n   📅 ${m.timestamp}\n\n`;
+                });
+                
+                this.addMessage('assistant', memoriesText);
+                this.lastAiReply = memoriesText;
+            }
+
+            recallMemories() {
+                if (this.memories.length === 0) {
+                    this.addSystemMessage('📖 You haven\'t saved any memories yet. Try "save this memory" after telling me something special!');
+                    return;
+                }
+
+                let story = '📖 YOUR STORY\n━━━━━━━━━━━━━━━━\n\nHere\'s what I remember about you:\n\n';
+                
+                // Group by emotion
+                const byEmotion = {};
+                this.memories.forEach(m => {
+                    if (!byEmotion[m.emotion]) byEmotion[m.emotion] = [];
+                    byEmotion[m.emotion].push(m);
+                });
+
+                for (const [emotion, mems] of Object.entries(byEmotion)) {
+                    const emoji = { happy: '😊', sad: '💙', excited: '🤩', anxious: '💪', neutral: '💭' }[emotion] || '💭';
+                    story += `\n${emoji} When you were ${emotion}:\n`;
+                    mems.forEach(m => {
+                        story += `   • ${m.content}\n`;
+                    });
+                }
+
+                this.addMessage('assistant', story);
+                this.lastAiReply = story;
+                this.speakReply('I\'ve compiled your story based on your memories. You\'ve had quite a journey!');
+            }
+        }
+
+        // ============ Initialize App ============
+        let app; // Global app instance
+        window.addEventListener('DOMContentLoaded', () => {
+            app = new ChatApp();
+        });
+    </script>
+</body>
+</html>
